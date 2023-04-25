@@ -1,7 +1,7 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.Image;
-import com.example.redditclone.repository.ImageRepository;
+import com.example.redditclone.repository.jpa.ImageRepository;
 import com.example.redditclone.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

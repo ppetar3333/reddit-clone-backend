@@ -5,9 +5,9 @@ import com.example.redditclone.models.Comment;
 import com.example.redditclone.models.Post;
 import com.example.redditclone.models.Reaction;
 import com.example.redditclone.models.User;
-import com.example.redditclone.repository.CommentRepository;
-import com.example.redditclone.repository.PostRepository;
-import com.example.redditclone.repository.ReactionRepository;
+import com.example.redditclone.repository.jpa.CommentRepository;
+import com.example.redditclone.repository.jpa.PostRepository;
+import com.example.redditclone.repository.jpa.ReactionRepository;
 import com.example.redditclone.web.dto.CommentDto;
 import com.example.redditclone.web.dto.PostDto;
 import com.example.redditclone.web.dto.ReactionDto;
@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.Convert;
 import java.time.LocalDateTime;
 import java.util.Optional;
 

@@ -1,7 +1,7 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.Report;
-import com.example.redditclone.repository.ReportRepository;
+import com.example.redditclone.repository.jpa.ReportRepository;
 import com.example.redditclone.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,14 +1,15 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.Post;
-import com.example.redditclone.repository.PostRepository;
+import com.example.redditclone.repository.jpa.PostRepository;
 import com.example.redditclone.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class JpaPostService implements PostService {
@@ -22,7 +23,10 @@ public class JpaPostService implements PostService {
     }
 
     public List<Post> all() {
-        return postRepository.findAll();
+        Iterable<Post> posts = postRepository.findAll();
+        List<Post> postList = StreamSupport.stream(posts.spliterator(), false)
+                .collect(Collectors.toList());
+        return postList;
     }
 
     @Override

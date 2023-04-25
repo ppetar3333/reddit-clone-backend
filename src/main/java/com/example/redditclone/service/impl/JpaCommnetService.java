@@ -1,9 +1,7 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.Comment;
-import com.example.redditclone.models.Reaction;
-import com.example.redditclone.models.User;
-import com.example.redditclone.repository.CommentRepository;
+import com.example.redditclone.repository.jpa.CommentRepository;
 import com.example.redditclone.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

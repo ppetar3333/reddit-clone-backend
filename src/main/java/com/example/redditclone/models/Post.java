@@ -4,6 +4,10 @@ import lombok.*;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -15,15 +19,19 @@ import java.util.Set;
 @ToString
 @Getter
 @Setter
+@Document(indexName = "posts")
+@Setting(settingPath = "/analyzers/serbianAnalyzer.json")
 public class Post {
 
     @Id
+    @Field(name = "postID", type = FieldType.Long, store = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postID;
 
     @Column(nullable = false)
     private String title;
 
+    @Field(type = FieldType.Text)
     @Column(nullable = false)
     private String text;
 
@@ -56,6 +64,11 @@ public class Post {
     @OneToOne
     private Flair flair;
 
+    @Field(type = FieldType.Keyword)
+    private String keywords;
+
+    private String filename;
+
     public void addReaction(Reaction r) {
         if(r.getPost() != null)
             r.getPost().getReactions().remove(r);
@@ -79,4 +92,5 @@ public class Post {
         r.setComment(null);
         getReports().remove(r);
     }
+
 }

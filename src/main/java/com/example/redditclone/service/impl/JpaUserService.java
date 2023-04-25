@@ -1,7 +1,7 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.User;
-import com.example.redditclone.repository.UserRepository;
+import com.example.redditclone.repository.jpa.UserRepository;
 import com.example.redditclone.service.UserService;
 import com.example.redditclone.web.dto.UserPasswordChangeDto;
 import org.springframework.beans.factory.annotation.Autowired;

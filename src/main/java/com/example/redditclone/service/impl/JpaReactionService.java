@@ -1,11 +1,7 @@
 package com.example.redditclone.service.impl;
 
-import com.example.redditclone.enums.ReactionType;
-import com.example.redditclone.models.Comment;
-import com.example.redditclone.models.Post;
 import com.example.redditclone.models.Reaction;
-import com.example.redditclone.models.User;
-import com.example.redditclone.repository.ReactionRepository;
+import com.example.redditclone.repository.jpa.ReactionRepository;
 import com.example.redditclone.service.ReactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

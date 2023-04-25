@@ -1,7 +1,7 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.Flair;
-import com.example.redditclone.repository.FlairRepository;
+import com.example.redditclone.repository.jpa.FlairRepository;
 import com.example.redditclone.service.FlairService;
 import com.example.redditclone.web.dto.SubredditFlairsDto;
 import org.springframework.beans.factory.annotation.Autowired;

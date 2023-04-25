@@ -1,7 +1,7 @@
 package com.example.redditclone.service.impl;
 
 import com.example.redditclone.models.Banned;
-import com.example.redditclone.repository.BannedRepository;
+import com.example.redditclone.repository.jpa.BannedRepository;
 import com.example.redditclone.service.BannedService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
