@@ -24,7 +24,6 @@ import java.util.Set;
 public class Post {
 
     @Id
-    @Field(name = "postID", type = FieldType.Long, store = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postID;
 

@@ -1,22 +1,22 @@
 package com.example.redditclone.web.controller;
 
-import com.example.redditclone.models.Flair;
-import com.example.redditclone.models.Post;
-import com.example.redditclone.models.Subreddit;
-import com.example.redditclone.models.User;
+import com.example.redditclone.models.*;
 import com.example.redditclone.service.PostService;
 import com.example.redditclone.service.SubredditService;
+import com.example.redditclone.service.elasticsearch.PostElasticService;
 import com.example.redditclone.web.dto.*;
-import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping({"api/posts"})
@@ -38,6 +38,12 @@ public class ApiPostController {
     private Converter<SubredditDto, Subreddit> toSubredditDto;
     @Autowired
     private Converter<FlairDto, Flair> toFlairDto;
+
+    private final PostElasticService postElasticService;
+
+    public ApiPostController(PostElasticService postElasticService) {
+        this.postElasticService = postElasticService;
+    }
 
     @CrossOrigin(origins = {"http://localhost:8080"}, maxAge = 3600L)
 
@@ -146,4 +152,34 @@ public class ApiPostController {
 
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
+
+    // ELASTICSEARCH
+    @PostMapping("/indexAll")
+    public ResponseEntity<String> indexAll() throws JsonProcessingException {
+        List<Post> posts = postService.all();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        List<PostElastic> postElastics = posts.stream()
+                .map(post -> new PostElastic(post.getPostID(), post.getTitle(), post.getText(), post.getKeywords(),
+                        post.getFilename(), post.getCreationDate().format(formatter), post.getVoteCount(), post.getImagePath(),
+                        new UserResponseDto(post.getUser().getUserID(), post.getUser().getUsername(), post.getUser().getDisplayName(), post.getUser().getRole().toString(), post.getUser().getAvatar()),
+                        post.getFlair() == null ? null : new FlairResponseDto(post.getFlair().getFlairID(), post.getFlair().getName()),
+                        post.getSubreddit() == null ? null : new SubredditResponseDto(post.getSubreddit().getSubredditID(), post.getSubreddit().getName(), post.getSubreddit().getDescription())))
+                .collect(Collectors.toList());
+
+        postElasticService.index(postElastics);
+
+        return ResponseEntity.ok("All posts indexed successfully");
+    }
+
+    @GetMapping("/text")
+    public List<PostResponseDto> findPostsByText(@RequestBody ObjectNode objectNode){
+        return postElasticService.findPostsByText(String.valueOf(objectNode.get("text")));
+    }
+
+    @GetMapping("/title")
+    public List<PostResponseDto> findPostsByTitle(@RequestBody ObjectNode objectNode){
+        return postElasticService.findPostsByTitle(String.valueOf(objectNode.get("title")));
+    }
+
 }

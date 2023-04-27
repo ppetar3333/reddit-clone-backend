@@ -1,11 +1,9 @@
 package com.example.redditclone.models;
 
+import com.example.redditclone.web.dto.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.annotations.*;
 
 @Setter
 @Getter
@@ -17,12 +15,26 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 public class PostElastic {
 
     @Id
-    private String id;
-    @Field(type = FieldType.Keyword)
+    private Long id;
+    @Field(type = FieldType.Text)
     private String title;
     @Field(type = FieldType.Text)
     private String text;
     @Field(type = FieldType.Keyword)
     private String keywords;
+    @Field(type = FieldType.Text)
     private String filename;
+    @Field(type = FieldType.Text)
+    private String creationDate;
+    @Field(type = FieldType.Integer)
+    private int voteCount;
+    @Field(type = FieldType.Text)
+    private String imagePath;
+    @Field(type = FieldType.Object)
+    private UserResponseDto user;
+    @Field(type = FieldType.Object)
+    private FlairResponseDto flair;
+    @Field(type = FieldType.Object)
+    private SubredditResponseDto subreddit;
+
 }
