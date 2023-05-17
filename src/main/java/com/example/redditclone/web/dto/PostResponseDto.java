@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostResponseDto {
-    private Long id;
+    private String id;
     private String title;
     private String text;
     private String keywords;
@@ -21,4 +21,5 @@ public class PostResponseDto {
     private UserResponseDto user;
     private FlairResponseDto flair;
     private SubredditResponseDto subreddit;
+    private String textFromPdf;
 }

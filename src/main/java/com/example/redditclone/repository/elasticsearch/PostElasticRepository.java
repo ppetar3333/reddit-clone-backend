@@ -9,4 +9,8 @@ import java.util.List;
 public interface PostElasticRepository extends ElasticsearchRepository<PostElastic, Long> {
     List<PostElastic> findAllByText(String text);
     List<PostElastic> findAllByTitle(String title);
+    List<PostElastic> findAllByTextFromPdf(String text);
+    List<PostElastic> findAllByVoteCountBetween(Long bottom, Long top);
+    List<PostElastic> findAllByVoteCountLessThanEqual(Long top);
+    List<PostElastic> findAllByVoteCountGreaterThanEqual(Long bottom);
 }

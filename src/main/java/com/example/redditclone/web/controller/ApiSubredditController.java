@@ -1,10 +1,14 @@
 package com.example.redditclone.web.controller;
 
-import com.example.redditclone.models.Subreddit;
-import com.example.redditclone.models.User;
+import com.example.redditclone.lucene.indexing.filters.CyrillicLatinConverter;
+import com.example.redditclone.models.*;
 import com.example.redditclone.service.EmailService;
 import com.example.redditclone.service.SubredditService;
-import com.example.redditclone.web.dto.SubredditDto;
+import com.example.redditclone.service.elasticsearch.PostElasticService;
+import com.example.redditclone.service.elasticsearch.SubredditElasticService;
+import com.example.redditclone.web.dto.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
@@ -13,8 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping({"api/subreddits"})
@@ -30,6 +36,11 @@ public class ApiSubredditController {
     private Converter<SubredditDto, Subreddit> toSubreddit;
     @Autowired
     private EmailService emailService;
+    private final SubredditElasticService subredditElasticService;
+
+    public ApiSubredditController(SubredditElasticService subredditElasticService) {
+        this.subredditElasticService = subredditElasticService;
+    }
 
     @CrossOrigin(origins = {"http://localhost:8080"}, maxAge = 3600L)
 
@@ -91,5 +102,75 @@ public class ApiSubredditController {
 
 
         return new ResponseEntity<>(toDto.convert(data), HttpStatus.CREATED);
+    }
+
+    // ELASTICSEARCH
+
+    @PostMapping("/indexAll")
+    public ResponseEntity<String> indexAll() throws JsonProcessingException {
+        List<Subreddit> subreddits = subredditService.all();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        List<SubredditElastic> subredditElastics = subreddits.stream()
+                .map(subreddit -> new SubredditElastic(
+                        subreddit.getSubredditID().toString(),
+                        subreddit.getName(),
+                        subreddit.getDescription(),
+                        subreddit.getCreationDate().format(formatter),
+                        subreddit.isSuspended(),
+                        subreddit.getSuspendedReason(),
+                        subreddit.getRules(),
+                        subreddit.getTextFromPdf(),
+                        subreddit.getFilename(),
+                        subreddit.getKeywords()))
+                .collect(Collectors.toList());
+
+        subredditElasticService.index(subredditElastics);
+
+        return ResponseEntity.ok("All subreddits indexed successfully");
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<SubredditResponseDto>> getAllElastic() {
+        List<SubredditResponseDto> subredditResponseDtos = subredditElasticService.all();
+        return new ResponseEntity<>(subredditResponseDtos, HttpStatus.OK);
+    }
+
+    @GetMapping("/name")
+    public List<SubredditResponseDto> findSubredditsByName(@RequestBody ObjectNode objectNode){
+        String rawName = String.valueOf(objectNode.get("name"));
+        String name = normalizeTitle(rawName).toLowerCase();
+        return subredditElasticService.findSubredditsByName(name);
+    }
+
+    @GetMapping("/description")
+    public List<SubredditResponseDto> findSubredditsByDescription(@RequestBody ObjectNode objectNode){
+        String rawDescription = String.valueOf(objectNode.get("description"));
+        String description = normalizeTitle(rawDescription).toLowerCase();
+        return subredditElasticService.findSubredditsByDescription(description);
+    }
+
+    private String normalizeTitle(String title) {
+        boolean containsCyrillic = false;
+        boolean containsLatinic = false;
+
+        // check if title contains Cyrillic or Latinic characters
+        for (char c : title.toCharArray()) {
+            if (Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CYRILLIC) {
+                containsCyrillic = true;
+            } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                containsLatinic = true;
+            }
+        }
+
+        // if title contains Cyrillic characters, convert to Latinic
+        if (containsCyrillic) {
+            return CyrillicLatinConverter.cir2lat(title);
+        } else if (containsLatinic) {
+            return title;
+        } else {
+            // if title contains neither Cyrillic nor Latinic characters, return empty string
+            return "";
+        }
     }
 }

@@ -38,6 +38,7 @@ public class PostDtoToPost implements Converter<PostDto, Post> {
         target.setImagePath(source.getImagePath());
         target.setSubreddit(toDtoSubreddit.convert(source.getSubreddit()));
         target.setUser(toDtoUser.convert(source.getUser()));
+        target.setTextFromPdf(source.getTextFromPdf());
 
         return target;
     }

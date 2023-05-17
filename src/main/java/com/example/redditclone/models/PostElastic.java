@@ -5,6 +5,8 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 
+import javax.persistence.Column;
+
 @Setter
 @Getter
 @Builder
@@ -15,7 +17,7 @@ import org.springframework.data.elasticsearch.annotations.*;
 public class PostElastic {
 
     @Id
-    private Long id;
+    private String id;
     @Field(type = FieldType.Text)
     private String title;
     @Field(type = FieldType.Text)
@@ -36,5 +38,7 @@ public class PostElastic {
     private FlairResponseDto flair;
     @Field(type = FieldType.Object)
     private SubredditResponseDto subreddit;
+    @Field(type = FieldType.Text)
+    private String textFromPdf;
 
 }

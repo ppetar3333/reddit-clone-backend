@@ -30,6 +30,7 @@ public class SubredditDtoToSubreddot implements Converter<SubredditDto, Subreddi
         target.setRules(source.getRules());
         target.setSuspendedReason(source.getSuspendedReason());
         target.setModerator(source.getModerators());
+        target.setTextFromPdf(source.getTextFromPdf());
 
         return target;
     }

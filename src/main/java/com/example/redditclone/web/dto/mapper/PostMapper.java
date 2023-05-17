@@ -3,6 +3,9 @@ package com.example.redditclone.web.dto.mapper;
 import com.example.redditclone.models.PostElastic;
 import com.example.redditclone.web.dto.PostDto;
 import com.example.redditclone.web.dto.PostResponseDto;
+import org.springframework.data.elasticsearch.core.SearchHits;
+
+import java.util.List;
 
 public class PostMapper {
 
@@ -19,6 +22,13 @@ public class PostMapper {
                 .flair(post.getFlair())
                 .user(post.getUser())
                 .subreddit(post.getSubreddit())
+                .textFromPdf(post.getTextFromPdf())
                 .build();
+    }
+
+    public static List<PostResponseDto> mapDtos(SearchHits<PostElastic> searchHits) {
+        return searchHits
+                .map(subreddit -> mapResponseDto(subreddit.getContent()))
+                .toList();
     }
 }

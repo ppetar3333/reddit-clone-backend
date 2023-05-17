@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
@@ -23,13 +24,14 @@ public class PostDto implements Serializable {
     @Size(min = 5, max = 100, message = "Title needs to be between 5 and 100")
     private String title;
     @NotEmpty(message = "Text can't be empty")
-    @Size(min = 5, max = 1000, message = "Title nedds to be between 5 and 1000")
+    @Size(min = 5, max = 100000000, message = "Title nedds to be between 5 and 1000")
     private String text;
     @NotNull
     private LocalDateTime creationDate;
     private String imagePath;
     @NotNull
     private int voteCount;
+    private String textFromPdf;
     @NotNull
     private UserDto user;
     private FlairDto flair;
@@ -43,6 +45,7 @@ public class PostDto implements Serializable {
     @JsonIgnore
     @Autowired
     private Converter<Subreddit, SubredditDto> toDtoSubreddit;
+    private MultipartFile[] files;
 
     public PostDto() {}
 
@@ -54,6 +57,7 @@ public class PostDto implements Serializable {
         this.creationDate = post.getCreationDate();
         this.imagePath = post.getImagePath();
         this.user = toDtoUser.convert(post.getUser());
+        this.textFromPdf = post.getTextFromPdf();
         if(post.getFlair() != null) this.flair = toDtoFlair.convert(post.getFlair());
         if(post.getSubreddit() != null) this.subreddit = toDtoSubreddit.convert(post.getSubreddit());
     }

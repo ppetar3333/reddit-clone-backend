@@ -6,6 +6,7 @@ import com.example.redditclone.models.User;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -33,6 +34,8 @@ public class SubredditDto implements Serializable {
     private List<String> rules;
     private String suspendedReason;
     private Set<User> moderators;
+    private String textFromPdf;
+    private MultipartFile[] files;
 
     public SubredditDto() {}
 
@@ -45,5 +48,6 @@ public class SubredditDto implements Serializable {
         this.moderators = subreddit.getModerator();
         this.isSuspended = subreddit.isSuspended();
         this.suspendedReason = subreddit.getSuspendedReason();
+        this.textFromPdf = subreddit.getTextFromPdf();
     }
 }

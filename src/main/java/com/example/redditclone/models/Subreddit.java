@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.Where;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -52,4 +54,12 @@ public class Subreddit {
 
     @ManyToMany(mappedBy = "subredditSet")
     private Set<Flair> flairs = new HashSet<>();
+
+    @Column(nullable = true, columnDefinition = "LONGTEXT")
+    private String textFromPdf;
+
+    private String filename;
+
+    @Field(type = FieldType.Keyword)
+    private String keywords;
 }

@@ -34,6 +34,7 @@ public class PostToPostDto implements Converter<Post, PostDto> {
             dto.setUser(toUserDto.convert(source.getUser()));
             if (source.getFlair() != null) dto.setFlair(toFlairDto.convert(source.getFlair()));
             dto.setSubreddit(toSubredditDto.convert(source.getSubreddit()));
+            dto.setTextFromPdf(source.getTextFromPdf());
         }
         return dto;
     }

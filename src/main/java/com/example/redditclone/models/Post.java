@@ -1,6 +1,7 @@
 package com.example.redditclone.models;
 
 import lombok.*;
+import org.elasticsearch.core.Nullable;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
@@ -59,6 +60,9 @@ public class Post {
 
     @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, mappedBy = "reportID")
     private Set<Report> reports = new HashSet<>();
+
+    @Column(nullable = true, columnDefinition = "LONGTEXT")
+    private String textFromPdf;
 
     @OneToOne
     private Flair flair;
