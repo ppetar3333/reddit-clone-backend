@@ -217,21 +217,34 @@ public class ApiPostController {
         return ResponseEntity.ok("All posts indexed successfully");
     }
 
-    @GetMapping("/text")
+    @PostMapping("/text")
     public List<PostResponseDto> findPostsByText(@RequestBody ObjectNode objectNode){
         String textRaw = String.valueOf(objectNode.get("text")).toLowerCase();
         String text = normalizeTitle(textRaw).toLowerCase();
         return postElasticService.findPostsByText(text);
     }
 
-    @GetMapping("/text-pdf")
+    @PostMapping("/text-pdf")
     public List<PostResponseDto> findPostsByTextPdf(@RequestBody ObjectNode objectNode){
         String textPdfRaw = String.valueOf(objectNode.get("textPdf"));
         String textPdf = normalizeTitle(textPdfRaw).toLowerCase();
-        return postElasticService.findPostsByTextPdf(textPdf);
+        if (containsCyrillicCharacters(textPdfRaw)) {
+
+            List<PostResponseDto> result = postElasticService.findPostsByTextPdf(textPdfRaw);
+
+            if (!result.isEmpty()) {
+                return result;
+            } else {
+                List<PostResponseDto> result2 = postElasticService.findPostsByTextPdf(textPdf);
+                return result2;
+            }
+
+        } else {
+            return postElasticService.findPostsByTextPdf(textPdf);
+        }
     }
 
-    @GetMapping("/title")
+    @PostMapping("/title")
     public List<PostResponseDto> findPostsByTitle(@RequestBody ObjectNode objectNode){
         String rawTitle = String.valueOf(objectNode.get("title"));
         String title = normalizeTitle(rawTitle).toLowerCase();
@@ -261,13 +274,22 @@ public class ApiPostController {
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
-    @GetMapping("/text-title")
+    @GetMapping("/combine")
     public List<PostResponseDto> searchPosts(@RequestBody ObjectNode objectNode) {
         String title = normalizeTitle(objectNode.get("title").asText().toLowerCase());
         String text = normalizeTitle(objectNode.get("text").asText().toLowerCase());
         String operator = objectNode.get("operator").asText();
 
         return postElasticService.findByTextOrTitle(title, text, operator);
+    }
+
+    private boolean containsCyrillicCharacters(String text) {
+        for (char c : text.toCharArray()) {
+            if (Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CYRILLIC) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String normalizeTitle(String title) {
@@ -283,14 +305,17 @@ public class ApiPostController {
             }
         }
 
-        // if title contains Cyrillic characters, convert to Latinic
-        if (containsCyrillic) {
-            return CyrillicLatinConverter.cir2lat(title);
-        } else if (containsLatinic) {
-            return title;
+        // if title contains both Cyrillic and Latinic characters, assume it's already normalized and return as is
+        if (containsCyrillic && containsLatinic) {
+            return title.toLowerCase();
+        } else if (containsCyrillic) {
+            // if title contains Cyrillic characters, convert to Latinic
+            return CyrillicLatinConverter.cir2lat(title).toLowerCase();
         } else {
-            // if title contains neither Cyrillic nor Latinic characters, return empty string
-            return "";
+            // if title contains Latinic characters or it was already lowercase Cyrillic, return the normalized title
+            return title.toLowerCase();
         }
     }
+
+
 }

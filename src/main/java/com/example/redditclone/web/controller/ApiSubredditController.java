@@ -4,11 +4,14 @@ import com.example.redditclone.lucene.indexing.filters.CyrillicLatinConverter;
 import com.example.redditclone.models.*;
 import com.example.redditclone.service.EmailService;
 import com.example.redditclone.service.SubredditService;
+import com.example.redditclone.service.UserService;
 import com.example.redditclone.service.elasticsearch.PostElasticService;
 import com.example.redditclone.service.elasticsearch.SubredditElasticService;
 import com.example.redditclone.web.dto.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
@@ -16,10 +19,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -34,6 +38,8 @@ public class ApiSubredditController {
     private Converter<Subreddit, SubredditDto> toDto;
     @Autowired
     private Converter<SubredditDto, Subreddit> toSubreddit;
+    @Autowired
+    private UserService userService;
     @Autowired
     private EmailService emailService;
     private final SubredditElasticService subredditElasticService;
@@ -81,25 +87,49 @@ public class ApiSubredditController {
         }
     }
 
-    @PostMapping("/save")
-    public ResponseEntity<SubredditDto> save(@RequestBody SubredditDto subredditDto) throws MessagingException {
+    @PostMapping(path = "/save/{userid}", consumes = {"multipart/form-data"})
+    public ResponseEntity<SubredditDto> save(@ModelAttribute SubredditDto subredditDto, @PathVariable("userid") Long userid) throws MessagingException, IOException {
+        Optional<User> user = userService.one(userid);
+        Set<User> moderators = new HashSet<>();
+        moderators.add(user.get());
+
+        List<String> rules = new ArrayList<>();
+        rules.add("1");
+        rules.add("2");
+        rules.add("3");
+
         Subreddit data = new Subreddit();
 
         data.setName(subredditDto.getName());
         data.setDescription(subredditDto.getDescription());
         data.setCreationDate(LocalDateTime.now());
-        data.setSuspended(subredditDto.isSuspended());
-        data.setRules(subredditDto.getRules());
-        data.setSuspendedReason(subredditDto.getSuspendedReason());
-        data.setModerator(subredditDto.getModerators());
+        data.setSuspended(false);
+        data.setRules(rules);
+        data.setSuspendedReason("");
+        data.setModerator(moderators);
 
-        subredditService.save(data);
+        String text = "";
 
-        for(User moderator : subredditDto.getModerators()) {
+        if (subredditDto.getFiles()[0].getOriginalFilename() != null) {
+            InputStream is = subredditDto.getFiles()[0].getInputStream();
+
+            PDDocument document = PDDocument.load(is);
+            PDFTextStripper pdfStripper = new PDFTextStripper();
+            text = pdfStripper.getText(document);
+            data.setTextFromPdf(text);
+
+            is.close();
+            document.close();
+        }
+
+        Subreddit saved = subredditService.save(data);
+
+        subredditElasticService.indexUploadedFile(subredditDto, data.getKeywords(), data.getFilename(), text, saved.getSubredditID(), saved.getRules());
+
+        for(User moderator : data.getModerator()) {
             subredditService.saveSubredditModerators(moderator.getUserID(), data.getSubredditID());
             emailService.sendMail(moderator.getEmail(), "New Subreddit", "You are now moderator of your own subreddit, enjoy!");
         }
-
 
         return new ResponseEntity<>(toDto.convert(data), HttpStatus.CREATED);
     }
@@ -136,14 +166,14 @@ public class ApiSubredditController {
         return new ResponseEntity<>(subredditResponseDtos, HttpStatus.OK);
     }
 
-    @GetMapping("/name")
+    @PostMapping("/name")
     public List<SubredditResponseDto> findSubredditsByName(@RequestBody ObjectNode objectNode){
         String rawName = String.valueOf(objectNode.get("name"));
         String name = normalizeTitle(rawName).toLowerCase();
         return subredditElasticService.findSubredditsByName(name);
     }
 
-    @GetMapping("/description")
+    @PostMapping("/description")
     public List<SubredditResponseDto> findSubredditsByDescription(@RequestBody ObjectNode objectNode){
         String rawDescription = String.valueOf(objectNode.get("description"));
         String description = normalizeTitle(rawDescription).toLowerCase();

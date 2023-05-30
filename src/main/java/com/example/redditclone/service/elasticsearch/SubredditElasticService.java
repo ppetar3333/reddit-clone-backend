@@ -121,7 +121,7 @@ public class SubredditElasticService {
         }
     }
 
-    public void indexUploadedFile(SubredditDto subreddit, String keywords, String filename, String text) throws IOException {
+    public void indexUploadedFile(SubredditDto subreddit, String keywords, String filename, String text, Long id, List<String> rules) throws IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         for (MultipartFile file : subreddit.getFiles()) {
@@ -133,13 +133,13 @@ public class SubredditElasticService {
             if(fileName != null){
                 SubredditElastic subredditElastic = getHandler(fileName).getIndexUnit(new File(fileName));
 
-                subredditElastic.setId(subreddit.getSubredditID().toString());
+                subredditElastic.setId(id.toString());
                 subredditElastic.setName(subreddit.getName());
                 subredditElastic.setDescription(subreddit.getDescription());
                 subredditElastic.setCreationDate(LocalDateTime.now().format(formatter));
                 subredditElastic.setSuspended(subreddit.isSuspended());
-                subredditElastic.setSuspendedReason(subreddit.getSuspendedReason());
-                subredditElastic.setRules(subreddit.getRules());
+                subredditElastic.setSuspendedReason("");
+                subredditElastic.setRules(rules);
                 subredditElastic.setTextFromPdf(text);
                 subredditElastic.setFilename(filename);
                 subredditElastic.setKeywords(keywords);
