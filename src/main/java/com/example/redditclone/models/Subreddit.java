@@ -62,4 +62,7 @@ public class Subreddit {
 
     @Field(type = FieldType.Keyword)
     private String keywords;
+
+    @Column(nullable = false)
+    private int postsCount;
 }

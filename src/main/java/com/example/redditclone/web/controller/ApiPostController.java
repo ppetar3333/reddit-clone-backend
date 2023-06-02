@@ -7,6 +7,7 @@ import com.example.redditclone.service.PostService;
 import com.example.redditclone.service.SubredditService;
 import com.example.redditclone.service.UserService;
 import com.example.redditclone.service.elasticsearch.PostElasticService;
+import com.example.redditclone.service.elasticsearch.SubredditElasticService;
 import com.example.redditclone.web.dto.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -59,9 +60,11 @@ public class ApiPostController {
     private Converter<FlairDto, Flair> toFlairDto;
 
     private final PostElasticService postElasticService;
+    private final SubredditElasticService subredditElasticService;
 
-    public ApiPostController(PostElasticService postElasticService) {
+    public ApiPostController(PostElasticService postElasticService, SubredditElasticService subredditElasticService) {
         this.postElasticService = postElasticService;
+        this.subredditElasticService = subredditElasticService;
     }
 
     @CrossOrigin(origins = {"http://localhost:8080"}, maxAge = 3600L)
@@ -144,21 +147,35 @@ public class ApiPostController {
 
         String text = "";
 
-        if (postDto.getFiles()[0].getOriginalFilename() != null) {
-            InputStream is = postDto.getFiles()[0].getInputStream();
+        MultipartFile[] files = postDto.getFiles();
 
-            PDDocument document = PDDocument.load(is);
-            PDFTextStripper pdfStripper = new PDFTextStripper();
-            text = pdfStripper.getText(document);
-            post.setTextFromPdf(text);
+        if (files.length > 0) {
+            MultipartFile file = files[0];
 
-            is.close();
-            document.close();
+            if (file.getContentType().equalsIgnoreCase("application/pdf")) {
+                InputStream is = file.getInputStream();
+
+                PDDocument document = PDDocument.load(is);
+                PDFTextStripper pdfStripper = new PDFTextStripper();
+                text = pdfStripper.getText(document);
+                post.setTextFromPdf(text);
+
+                is.close();
+                document.close();
+            }
         }
+
+        int postsCount = subreddit.get().getPostsCount();
+        int postsCountIncrement = postsCount + 1;
+
+        subreddit.get().setPostsCount(postsCountIncrement);
 
         postService.save(post);
 
         postElasticService.indexUploadedFile(postDto, post.getKeywords(), post.getFilename(), post, text);
+
+        subredditService.save(subreddit.get());
+        subredditElasticService.incrementPostsCount(subreddit.get().getSubredditID(), postsCountIncrement);
 
         return new ResponseEntity<>(post.getPostID(), HttpStatus.CREATED);
     }
@@ -209,7 +226,7 @@ public class ApiPostController {
                         post.getFilename(), post.getCreationDate().format(formatter), post.getVoteCount(), post.getImagePath(),
                         new UserResponseDto(post.getUser().getUserID(), post.getUser().getUsername(), post.getUser().getDisplayName(), post.getUser().getRole().toString(), post.getUser().getAvatar()),
                         post.getFlair() == null ? null : new FlairResponseDto(post.getFlair().getFlairID(), post.getFlair().getName()),
-                        post.getSubreddit() == null ? null : new SubredditResponseDto(post.getSubreddit().getSubredditID().toString(), post.getSubreddit().getName(), post.getSubreddit().getDescription(), post.getSubreddit().getCreationDate().format(formatter), post.getSubreddit().isSuspended(), post.getSubreddit().getSuspendedReason(), post.getSubreddit().getRules(), post.getSubreddit().getTextFromPdf(), post.getSubreddit().getFilename(), post.getSubreddit().getKeywords()), post.getTextFromPdf()))
+                        post.getSubreddit() == null ? null : new SubredditResponseDto(post.getSubreddit().getSubredditID().toString(), post.getSubreddit().getName(), post.getSubreddit().getDescription(), post.getSubreddit().getCreationDate().format(formatter), post.getSubreddit().isSuspended(), post.getSubreddit().getSuspendedReason(), post.getSubreddit().getRules(), post.getSubreddit().getTextFromPdf(), post.getSubreddit().getFilename(), post.getSubreddit().getKeywords(), post.getSubreddit().getPostsCount()), post.getTextFromPdf()))
                 .collect(Collectors.toList());
 
         postElasticService.index(postElastics);

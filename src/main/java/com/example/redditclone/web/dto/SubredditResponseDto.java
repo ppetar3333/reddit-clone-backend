@@ -22,4 +22,5 @@ public class SubredditResponseDto {
     private String textFromPdf;
     private String filename;
     private String keywords;
+    private int postsCount;
 }

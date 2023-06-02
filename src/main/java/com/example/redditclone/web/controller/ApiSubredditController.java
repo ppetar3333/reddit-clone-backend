@@ -3,6 +3,7 @@ package com.example.redditclone.web.controller;
 import com.example.redditclone.lucene.indexing.filters.CyrillicLatinConverter;
 import com.example.redditclone.models.*;
 import com.example.redditclone.service.EmailService;
+import com.example.redditclone.service.PostService;
 import com.example.redditclone.service.SubredditService;
 import com.example.redditclone.service.UserService;
 import com.example.redditclone.service.elasticsearch.PostElasticService;
@@ -17,6 +18,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -40,6 +42,8 @@ public class ApiSubredditController {
     private Converter<SubredditDto, Subreddit> toSubreddit;
     @Autowired
     private UserService userService;
+    @Autowired
+    private PostService postService;
     @Autowired
     private EmailService emailService;
     private final SubredditElasticService subredditElasticService;
@@ -107,19 +111,26 @@ public class ApiSubredditController {
         data.setRules(rules);
         data.setSuspendedReason("");
         data.setModerator(moderators);
+        data.setPostsCount(0);
 
         String text = "";
 
-        if (subredditDto.getFiles()[0].getOriginalFilename() != null) {
-            InputStream is = subredditDto.getFiles()[0].getInputStream();
+        MultipartFile[] files = subredditDto.getFiles();
 
-            PDDocument document = PDDocument.load(is);
-            PDFTextStripper pdfStripper = new PDFTextStripper();
-            text = pdfStripper.getText(document);
-            data.setTextFromPdf(text);
+        if (files.length > 0) {
+            MultipartFile file = files[0];
 
-            is.close();
-            document.close();
+            if (file.getContentType().equalsIgnoreCase("application/pdf")) {
+                InputStream is = subredditDto.getFiles()[0].getInputStream();
+
+                PDDocument document = PDDocument.load(is);
+                PDFTextStripper pdfStripper = new PDFTextStripper();
+                text = pdfStripper.getText(document);
+                data.setTextFromPdf(text);
+
+                is.close();
+                document.close();
+            }
         }
 
         Subreddit saved = subredditService.save(data);
@@ -152,12 +163,18 @@ public class ApiSubredditController {
                         subreddit.getRules(),
                         subreddit.getTextFromPdf(),
                         subreddit.getFilename(),
-                        subreddit.getKeywords()))
+                        subreddit.getKeywords(),
+                        subreddit.getPostsCount()))
                 .collect(Collectors.toList());
 
         subredditElasticService.index(subredditElastics);
 
         return ResponseEntity.ok("All subreddits indexed successfully");
+    }
+
+    @GetMapping("/reindex")
+    public void reindex(){
+        subredditElasticService.reindex();
     }
 
     @GetMapping("/all")
@@ -178,6 +195,53 @@ public class ApiSubredditController {
         String rawDescription = String.valueOf(objectNode.get("description"));
         String description = normalizeTitle(rawDescription).toLowerCase();
         return subredditElasticService.findSubredditsByDescription(description);
+    }
+
+    @PostMapping("/text-pdf")
+    public List<SubredditResponseDto> findPostsByTextPdf(@RequestBody ObjectNode objectNode){
+        String textPdfRaw = String.valueOf(objectNode.get("textPdf"));
+        String textPdf = normalizeTitle(textPdfRaw).toLowerCase();
+        if (containsCyrillicCharacters(textPdfRaw)) {
+
+            List<SubredditResponseDto> result = subredditElasticService.findSubredditsByTextPdf(textPdfRaw);
+
+            if (!result.isEmpty()) {
+                return result;
+            } else {
+                List<SubredditResponseDto> result2 = subredditElasticService.findSubredditsByTextPdf(textPdf);
+                return result2;
+            }
+
+        } else {
+            return subredditElasticService.findSubredditsByTextPdf(textPdf);
+        }
+    }
+
+    @GetMapping("/posts-count")
+    public ResponseEntity<List<SubredditResponseDto>> getByPostCount(@RequestParam(value = "bottom", required = false) Long bottom, @RequestParam(value = "top", required = false) Long top) {
+        List<SubredditResponseDto> subreddits;
+
+        if (top != null && bottom != null) {
+            subreddits = subredditElasticService.findAllByPostsCountBetween(bottom, top);
+        } else if (top != null) {
+            subreddits = subredditElasticService.findAllByPostsCountLessThanEqual(top);
+        } else if (bottom != null) {
+            subreddits = subredditElasticService.findAllByPostsCountGreaterThanEqual(bottom);
+        } else {
+            subreddits = new ArrayList<>();
+        }
+
+        return new ResponseEntity<>(subreddits, HttpStatus.OK);
+    }
+
+
+    private boolean containsCyrillicCharacters(String text) {
+        for (char c : text.toCharArray()) {
+            if (Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CYRILLIC) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String normalizeTitle(String title) {

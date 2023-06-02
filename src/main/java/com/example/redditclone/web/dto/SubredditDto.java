@@ -36,6 +36,7 @@ public class SubredditDto implements Serializable {
     private Set<User> moderators;
     private String textFromPdf;
     private MultipartFile[] files;
+    private int postsCount;
 
     public SubredditDto() {}
 
@@ -49,5 +50,6 @@ public class SubredditDto implements Serializable {
         this.isSuspended = subreddit.isSuspended();
         this.suspendedReason = subreddit.getSuspendedReason();
         this.textFromPdf = subreddit.getTextFromPdf();
+        this.postsCount = subreddit.getPostsCount();
     }
 }

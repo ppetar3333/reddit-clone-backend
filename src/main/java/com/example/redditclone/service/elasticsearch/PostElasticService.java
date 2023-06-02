@@ -119,7 +119,7 @@ public class PostElasticService {
                 postElastic.setImagePath(post.getImagePath());
                 postElastic.setUser(new UserResponseDto(post1.getUser().getUserID(), post1.getUser().getUsername(), post1.getUser().getDisplayName(), post1.getUser().getRole().toString(), post1.getUser().getAvatar()));
                 postElastic.setFlair(post1.getFlair() == null ? null : new FlairResponseDto(post1.getFlair().getFlairID(), post1.getFlair().getName()));
-                postElastic.setSubreddit(post1.getSubreddit() == null ? null : new SubredditResponseDto(post1.getSubreddit().getSubredditID().toString(), post1.getSubreddit().getName(), post1.getSubreddit().getDescription(), post1.getSubreddit().getCreationDate().format(formatter), post1.getSubreddit().isSuspended(), post1.getSubreddit().getSuspendedReason(), post1.getSubreddit().getRules(), post1.getSubreddit().getTextFromPdf(), post1.getSubreddit().getFilename(), post1.getSubreddit().getKeywords()));
+                postElastic.setSubreddit(post1.getSubreddit() == null ? null : new SubredditResponseDto(post1.getSubreddit().getSubredditID().toString(), post1.getSubreddit().getName(), post1.getSubreddit().getDescription(), post1.getSubreddit().getCreationDate().format(formatter), post1.getSubreddit().isSuspended(), post1.getSubreddit().getSuspendedReason(), post1.getSubreddit().getRules(), post1.getSubreddit().getTextFromPdf(), post1.getSubreddit().getFilename(), post1.getSubreddit().getKeywords(), post1.getSubreddit().getPostsCount()));
                 postElastic.setTextFromPdf(text);
 
                 save(postElastic);

@@ -49,11 +49,31 @@ public class SubredditElasticService {
         return mapSubredditToSubredditDTO(subreddits);
     }
 
+    public List<SubredditResponseDto> findSubredditsByTextPdf(String text){
+        List<SubredditElastic> subreddits = subredditElasticRepository.findAllByTextFromPdf(text);
+        return mapSubredditToSubredditDTO(subreddits);
+    }
+
     public List<SubredditResponseDto> all(){
         Iterable<SubredditElastic> subreddits = subredditElasticRepository.findAll();
         List<SubredditElastic> subredditElastics = StreamSupport.stream(subreddits.spliterator(), false)
                 .collect(Collectors.toList());
         return mapSubredditToSubredditDTO(subredditElastics);
+    }
+
+    public List<SubredditResponseDto> findAllByPostsCountBetween(Long bottom, Long top) {
+        List<SubredditElastic> subreddits = subredditElasticRepository.findAllByPostsCountBetween(bottom, top);
+        return mapSubredditToSubredditDTO(subreddits);
+    }
+
+    public List<SubredditResponseDto> findAllByPostsCountLessThanEqual(Long top) {
+        List<SubredditElastic> subreddits = subredditElasticRepository.findAllByPostsCountLessThanEqual(top);
+        return mapSubredditToSubredditDTO(subreddits);
+    }
+
+    public List<SubredditResponseDto> findAllByPostsCountGreaterThanEqual(Long bottom) {
+        List<SubredditElastic> subreddits = subredditElasticRepository.findAllByPostsCountGreaterThanEqual(bottom);
+        return mapSubredditToSubredditDTO(subreddits);
     }
 
     public void index(List<SubredditElastic> subreddits) {
@@ -143,12 +163,22 @@ public class SubredditElasticService {
                 subredditElastic.setTextFromPdf(text);
                 subredditElastic.setFilename(filename);
                 subredditElastic.setKeywords(keywords);
+                subredditElastic.setPostsCount(0);
 
                 save(subredditElastic);
             }
         }
     }
 
+    public void incrementPostsCount(Long id, int postsCount) {
+        SubredditElastic existingSubreddit = subredditElasticRepository.findById(id).orElse(null);
+
+        if (existingSubreddit != null) {
+            existingSubreddit.setPostsCount(postsCount);
+
+            subredditElasticRepository.save(existingSubreddit);
+        }
+    }
     private String saveUploadedFileInFolder(MultipartFile file) throws IOException {
         String retVal = null;
         if (!file.isEmpty()) {

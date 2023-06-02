@@ -12,4 +12,7 @@ public interface SubredditElasticRepository extends ElasticsearchRepository<Subr
     List<SubredditElastic> findAllByDescription(String description);
     List<SubredditElastic> findAllByName(String name);
     List<SubredditElastic> findAllByTextFromPdf(String text);
+    List<SubredditElastic> findAllByPostsCountBetween(Long bottom, Long top);
+    List<SubredditElastic> findAllByPostsCountLessThanEqual(Long top);
+    List<SubredditElastic> findAllByPostsCountGreaterThanEqual(Long bottom);
 }

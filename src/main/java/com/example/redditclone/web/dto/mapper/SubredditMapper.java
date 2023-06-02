@@ -21,6 +21,7 @@ public class SubredditMapper {
                 .rules(subreddit.getRules())
                 .textFromPdf(subreddit.getTextFromPdf())
                 .keywords(subreddit.getKeywords())
+                .postsCount(subreddit.getPostsCount())
                 .build();
     }
 

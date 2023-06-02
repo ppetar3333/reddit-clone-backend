@@ -38,4 +38,6 @@ public class SubredditElastic {
     private String filename;
     @Field(type = FieldType.Keyword)
     private String keywords;
+    @Field(type = FieldType.Integer)
+    private int postsCount;
 }

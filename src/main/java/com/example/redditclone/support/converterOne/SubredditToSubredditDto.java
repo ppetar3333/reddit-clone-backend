@@ -26,6 +26,7 @@ public class SubredditToSubredditDto implements Converter<Subreddit, SubredditDt
             dto.setSuspendedReason(source.getSuspendedReason());
             dto.setModerators(source.getModerator());
             dto.setTextFromPdf(source.getTextFromPdf());
+            dto.setPostsCount(source.getPostsCount());
         }
         return dto;
     }

@@ -13,8 +13,8 @@ insert into users(avatar,email,is_banned,password,registration_date,role,usernam
 -- username: mmihailo33; passowrd: miki123
 insert into users(avatar,email,is_banned,password,registration_date,role,username) values('https://www.w3schools.com/howto/img_avatar.png','mmihailo33@gmail.com',false,'$2a$10$ajOLaGrQ0N3ZowzontXulu24nLQaWLxk5fcVNYtiaM8mfYN05jJXe','2020-01-01 12:32:00',1,'mmihailo33');
 
-insert into subreddit(creation_date,description,is_suspended,name,suspended_reason) values('2020-01-01 12:32:00','Basketball is a team sport in which two teams, most commonly of five players each, opposing one another on a rectangular court, compete with the primary objective of shooting a basketball.',false,'Basketball','nema razlog');
-insert into subreddit(creation_date,description,is_suspended,name,suspended_reason) values('2020-01-01 12:32:00','React js is an open-source JavaScript library that is used for building user interfaces specifically for single-page applications.',false,'React','ima razlog');
+insert into subreddit(creation_date,description,is_suspended,name,suspended_reason,posts_count) values('2020-01-01 12:32:00','Basketball is a team sport in which two teams, most commonly of five players each, opposing one another on a rectangular court, compete with the primary objective of shooting a basketball.',false,'Basketball','nema razlog',1);
+insert into subreddit(creation_date,description,is_suspended,name,suspended_reason,posts_count) values('2020-01-01 12:32:00','React js is an open-source JavaScript library that is used for building user interfaces specifically for single-page applications.',false,'React','ima razlog',5);
 
 insert into flair(name) values('Programming');
 insert into flair(name) values('Sports');
