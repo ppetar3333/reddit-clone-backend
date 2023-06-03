@@ -141,33 +141,42 @@ public class SubredditElasticService {
         }
     }
 
-    public void indexUploadedFile(SubredditDto subreddit, String keywords, String filename, String text, Long id, List<String> rules) throws IOException {
+    public void indexUploadedFile(SubredditDto subreddit, String keywords, String filename, String text, Long id, List<String> rules, MultipartFile[] files) throws IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        for (MultipartFile file : subreddit.getFiles()) {
-            if (file.isEmpty()) {
-                continue;
+        if (files != null) {
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) {
+                    continue;
+                }
+
+                String fileName = saveUploadedFileInFolder(file);
+                if (fileName != null) {
+                    SubredditElastic subredditElastic = getHandler(fileName).getIndexUnit(new File(fileName));
+                    setSubredditElasticFields(subredditElastic, subreddit, id.toString(), filename, text, rules, keywords);
+                    save(subredditElastic);
+                }
             }
-
-            String fileName = saveUploadedFileInFolder(file);
-            if(fileName != null){
-                SubredditElastic subredditElastic = getHandler(fileName).getIndexUnit(new File(fileName));
-
-                subredditElastic.setId(id.toString());
-                subredditElastic.setName(subreddit.getName());
-                subredditElastic.setDescription(subreddit.getDescription());
-                subredditElastic.setCreationDate(LocalDateTime.now().format(formatter));
-                subredditElastic.setSuspended(subreddit.isSuspended());
-                subredditElastic.setSuspendedReason("");
-                subredditElastic.setRules(rules);
-                subredditElastic.setTextFromPdf(text);
-                subredditElastic.setFilename(filename);
-                subredditElastic.setKeywords(keywords);
-                subredditElastic.setPostsCount(0);
-
-                save(subredditElastic);
-            }
+        } else {
+            SubredditElastic subredditElastic = new SubredditElastic();
+            setSubredditElasticFields(subredditElastic, subreddit, id.toString(), filename, text, rules, keywords);
+            save(subredditElastic);
         }
+    }
+
+    private void setSubredditElasticFields(SubredditElastic subredditElastic, SubredditDto subreddit, String id, String filename, String text, List<String> rules, String keywords) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        subredditElastic.setId(id);
+        subredditElastic.setName(subreddit.getName());
+        subredditElastic.setDescription(subreddit.getDescription());
+        subredditElastic.setCreationDate(LocalDateTime.now().format(formatter));
+        subredditElastic.setSuspended(subreddit.isSuspended());
+        subredditElastic.setSuspendedReason("");
+        subredditElastic.setRules(rules);
+        subredditElastic.setTextFromPdf(text);
+        subredditElastic.setFilename(filename);
+        subredditElastic.setKeywords(keywords);
+        subredditElastic.setPostsCount(0);
     }
 
     public void incrementPostsCount(Long id, int postsCount) {

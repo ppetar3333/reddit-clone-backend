@@ -128,7 +128,7 @@ public class ApiPostController {
     }
 
     @PostMapping(path = "/save/{userid}/{flairid}/{subreditid}", consumes = {"multipart/form-data"})
-    public ResponseEntity<Long> save(@ModelAttribute PostDto postDto, @PathVariable("userid") Long userid, @PathVariable("flairid") Long flairid, @PathVariable("subreditid") Long subreditid) throws IOException {
+    public ResponseEntity<Long> save(@ModelAttribute PostDto postDto, @PathVariable("userid") Long userid, @PathVariable("flairid") Long flairid, @PathVariable("subreditid") Long subreditid, @RequestParam(value ="files", required=false) MultipartFile[] files) throws IOException {
 
         Optional<Flair> flair = flairService.one(flairid);
         Optional<User> user = userService.one(userid);
@@ -146,10 +146,9 @@ public class ApiPostController {
         if(flair.get().getFlairID() != null) post.setFlair(flair.get());
 
         String text = "";
+        String filename = "";
 
-        MultipartFile[] files = postDto.getFiles();
-
-        if (files.length > 0) {
+        if (files != null) {
             MultipartFile file = files[0];
 
             if (file.getContentType().equalsIgnoreCase("application/pdf")) {
@@ -159,6 +158,7 @@ public class ApiPostController {
                 PDFTextStripper pdfStripper = new PDFTextStripper();
                 text = pdfStripper.getText(document);
                 post.setTextFromPdf(text);
+                filename = file.getOriginalFilename();
 
                 is.close();
                 document.close();
@@ -172,7 +172,7 @@ public class ApiPostController {
 
         postService.save(post);
 
-        postElasticService.indexUploadedFile(postDto, post.getKeywords(), post.getFilename(), post, text);
+        postElasticService.indexUploadedFile(postDto, post.getKeywords(), filename, post, text, files);
 
         subredditService.save(subreddit.get());
         subredditElasticService.incrementPostsCount(subreddit.get().getSubredditID(), postsCountIncrement);

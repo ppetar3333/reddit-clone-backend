@@ -35,7 +35,6 @@ public class SubredditDto implements Serializable {
     private String suspendedReason;
     private Set<User> moderators;
     private String textFromPdf;
-    private MultipartFile[] files;
     private int postsCount;
 
     public SubredditDto() {}

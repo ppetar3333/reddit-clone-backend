@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.elasticsearch.core.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,7 +46,6 @@ public class PostDto implements Serializable {
     @JsonIgnore
     @Autowired
     private Converter<Subreddit, SubredditDto> toDtoSubreddit;
-    private MultipartFile[] files;
 
     public PostDto() {}
 

@@ -92,7 +92,7 @@ public class ApiSubredditController {
     }
 
     @PostMapping(path = "/save/{userid}", consumes = {"multipart/form-data"})
-    public ResponseEntity<SubredditDto> save(@ModelAttribute SubredditDto subredditDto, @PathVariable("userid") Long userid) throws MessagingException, IOException {
+    public ResponseEntity<SubredditDto> save(@ModelAttribute SubredditDto subredditDto, @PathVariable("userid") Long userid, @RequestParam(value ="files", required=false) MultipartFile[] files) throws MessagingException, IOException {
         Optional<User> user = userService.one(userid);
         Set<User> moderators = new HashSet<>();
         moderators.add(user.get());
@@ -114,19 +114,19 @@ public class ApiSubredditController {
         data.setPostsCount(0);
 
         String text = "";
+        String filename = "";
 
-        MultipartFile[] files = subredditDto.getFiles();
-
-        if (files.length > 0) {
+        if (files != null) {
             MultipartFile file = files[0];
 
             if (file.getContentType().equalsIgnoreCase("application/pdf")) {
-                InputStream is = subredditDto.getFiles()[0].getInputStream();
+                InputStream is = file.getInputStream();
 
                 PDDocument document = PDDocument.load(is);
                 PDFTextStripper pdfStripper = new PDFTextStripper();
                 text = pdfStripper.getText(document);
                 data.setTextFromPdf(text);
+                filename = file.getOriginalFilename();
 
                 is.close();
                 document.close();
@@ -135,7 +135,7 @@ public class ApiSubredditController {
 
         Subreddit saved = subredditService.save(data);
 
-        subredditElasticService.indexUploadedFile(subredditDto, data.getKeywords(), data.getFilename(), text, saved.getSubredditID(), saved.getRules());
+        subredditElasticService.indexUploadedFile(subredditDto, data.getKeywords(), filename, text, saved.getSubredditID(), saved.getRules(), files);
 
         for(User moderator : data.getModerator()) {
             subredditService.saveSubredditModerators(moderator.getUserID(), data.getSubredditID());

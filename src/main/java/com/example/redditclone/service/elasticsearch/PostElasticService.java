@@ -97,34 +97,66 @@ public class PostElasticService {
         postElasticRepository.save(postElastic);
     }
 
-    public void indexUploadedFile(PostDto post, String keywords, String filename, Post post1, String text) throws IOException {
+    public void indexUploadedFile(PostDto post, String keywords, String filename, Post post1, String text, MultipartFile[] files) throws IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        for (MultipartFile file : post.getFiles()) {
-            if (file.isEmpty()) {
-                continue;
-            }
 
-            String fileName = saveUploadedFileInFolder(file);
-            if(fileName != null){
-                PostElastic postElastic = getHandler(fileName).getIndexUnit(new File(fileName));
+        if (files == null) {
+            // Save PostElastic without files
+            PostElastic postElastic = createPostElasticWithoutFiles(post, keywords, filename, post1, text, formatter);
+            save(postElastic);
+        } else {
+            // Process each file
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) {
+                    continue;
+                }
 
-                postElastic.setId(post1.getPostID().toString());
-                postElastic.setTitle(post.getTitle());
-                postElastic.setText(post.getText());
-                postElastic.setFilename(filename);
-                postElastic.setKeywords(keywords);
-                postElastic.setCreationDate(LocalDateTime.now().format(formatter));
-                postElastic.setVoteCount(post.getVoteCount());
-                postElastic.setImagePath(post.getImagePath());
-                postElastic.setUser(new UserResponseDto(post1.getUser().getUserID(), post1.getUser().getUsername(), post1.getUser().getDisplayName(), post1.getUser().getRole().toString(), post1.getUser().getAvatar()));
-                postElastic.setFlair(post1.getFlair() == null ? null : new FlairResponseDto(post1.getFlair().getFlairID(), post1.getFlair().getName()));
-                postElastic.setSubreddit(post1.getSubreddit() == null ? null : new SubredditResponseDto(post1.getSubreddit().getSubredditID().toString(), post1.getSubreddit().getName(), post1.getSubreddit().getDescription(), post1.getSubreddit().getCreationDate().format(formatter), post1.getSubreddit().isSuspended(), post1.getSubreddit().getSuspendedReason(), post1.getSubreddit().getRules(), post1.getSubreddit().getTextFromPdf(), post1.getSubreddit().getFilename(), post1.getSubreddit().getKeywords(), post1.getSubreddit().getPostsCount()));
-                postElastic.setTextFromPdf(text);
-
-                save(postElastic);
+                String fileName = saveUploadedFileInFolder(file);
+                if (fileName != null) {
+                    PostElastic postElastic = createPostElasticFromFile(fileName, post, keywords, filename, post1, text, formatter);
+                    save(postElastic);
+                }
             }
         }
+    }
+
+    private PostElastic createPostElasticWithoutFiles(PostDto post, String keywords, String filename, Post post1, String text, DateTimeFormatter formatter) {
+        PostElastic postElastic = new PostElastic();
+
+        postElastic.setId(post1.getPostID().toString());
+        postElastic.setTitle(post.getTitle());
+        postElastic.setText(post.getText());
+        postElastic.setFilename(filename);
+        postElastic.setKeywords(keywords);
+        postElastic.setCreationDate(LocalDateTime.now().format(formatter));
+        postElastic.setVoteCount(post.getVoteCount());
+        postElastic.setImagePath(post.getImagePath());
+        postElastic.setUser(new UserResponseDto(post1.getUser().getUserID(), post1.getUser().getUsername(), post1.getUser().getDisplayName(), post1.getUser().getRole().toString(), post1.getUser().getAvatar()));
+        postElastic.setFlair(post1.getFlair() == null ? null : new FlairResponseDto(post1.getFlair().getFlairID(), post1.getFlair().getName()));
+        postElastic.setSubreddit(post1.getSubreddit() == null ? null : new SubredditResponseDto(post1.getSubreddit().getSubredditID().toString(), post1.getSubreddit().getName(), post1.getSubreddit().getDescription(), post1.getSubreddit().getCreationDate().format(formatter), post1.getSubreddit().isSuspended(), post1.getSubreddit().getSuspendedReason(), post1.getSubreddit().getRules(), post1.getSubreddit().getTextFromPdf(), post1.getSubreddit().getFilename(), post1.getSubreddit().getKeywords(), post1.getSubreddit().getPostsCount()));
+        postElastic.setTextFromPdf(text);
+
+        return postElastic;
+    }
+
+    private PostElastic createPostElasticFromFile(String fileName, PostDto post, String keywords, String filename, Post post1, String text, DateTimeFormatter formatter) {
+        PostElastic postElastic = getHandler(fileName).getIndexUnit(new File(fileName));
+
+        postElastic.setId(post1.getPostID().toString());
+        postElastic.setTitle(post.getTitle());
+        postElastic.setText(post.getText());
+        postElastic.setFilename(filename);
+        postElastic.setKeywords(keywords);
+        postElastic.setCreationDate(LocalDateTime.now().format(formatter));
+        postElastic.setVoteCount(post.getVoteCount());
+        postElastic.setImagePath(post.getImagePath());
+        postElastic.setUser(new UserResponseDto(post1.getUser().getUserID(), post1.getUser().getUsername(), post1.getUser().getDisplayName(), post1.getUser().getRole().toString(), post1.getUser().getAvatar()));
+        postElastic.setFlair(post1.getFlair() == null ? null : new FlairResponseDto(post1.getFlair().getFlairID(), post1.getFlair().getName()));
+        postElastic.setSubreddit(post1.getSubreddit() == null ? null : new SubredditResponseDto(post1.getSubreddit().getSubredditID().toString(), post1.getSubreddit().getName(), post1.getSubreddit().getDescription(), post1.getSubreddit().getCreationDate().format(formatter), post1.getSubreddit().isSuspended(), post1.getSubreddit().getSuspendedReason(), post1.getSubreddit().getRules(), post1.getSubreddit().getTextFromPdf(), post1.getSubreddit().getFilename(), post1.getSubreddit().getKeywords(), post1.getSubreddit().getPostsCount()));
+        postElastic.setTextFromPdf(text);
+
+        return postElastic;
     }
 
     private String saveUploadedFileInFolder(MultipartFile file) throws IOException {
